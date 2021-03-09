@@ -2,9 +2,9 @@ hirom
 
 ; Settings
 
+!IncreasedExpGoldTech = 0 ; 1 = 4x exp, 8x gold, 4x tech points
 !BetterTabs = 1 ; 1 = tabs increase more stats
-!IncreasedExpGoldTech = 0 ; 1 = 4x exp, 8x money, 4x tech points
-!JetsOfTimeRando = 0 ; 1 = compatible with jets of time rando, incompatible with normal game
+!JetsOfTimeRando = 0 ; 1 = compatible with jets of time randomizer, incompatible with normal game
 
 ; Increased Exp/Gold/Tech points
 
@@ -112,6 +112,7 @@ org $C37A30
 warnpc $C38000
 
 org $CDF9C0
+if !IncreasedExpGoldTech != 0
 macro ShiftPointsLeft(value, by, overLimit)
     LDA <value>, X
     !by #= <by>
@@ -162,7 +163,9 @@ AddPoints:
     +
     STA $B2DB
 JML AddPoints.ReturnPoint
+endif
 
+if !BetterTabs != 0
 TabCondition:
     CPY #$00 : BEQ .powerTab
     CPY #$02 : BEQ .speedTab
@@ -226,8 +229,6 @@ TabIncrease:
     %IncreaseStatBy2($000E, $63) ; magic
     %IncreaseStatBy2($0011, $63) ; magic defense
 JML TabIncrease.Return
+endif
 
 warnpc $CE0000
-
-
-
