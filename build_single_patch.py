@@ -29,7 +29,7 @@ class PatchMaker:
             else:
                 self.output.write(line)
 
-
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 with PatchMaker("patch.asm") as patch_maker:
     patch_maker.read_file(os.path.join("src","patch.asm"))
 
