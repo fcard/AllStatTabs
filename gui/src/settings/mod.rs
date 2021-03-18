@@ -89,6 +89,9 @@ impl HackSettings {
     writeln!(file,"IncreaseExpGoldTech = {}", self.expgoldtech.allow as i8)?;
     writeln!(file,"GradualExpIncrease = {}", self.expgoldtech.gradual_exp as i8)?;
     writeln!(file,"GradualExpMin = {}", self.expgoldtech.gradual_exp_min)?;
+    writeln!(file,"ExpIncrease = {}", self.expgoldtech.exp_increase)?;
+    writeln!(file,"GoldIncrease = {}", self.expgoldtech.gold_increase)?;
+    writeln!(file,"TechIncrease = {}", self.expgoldtech.tech_increase)?;
     Ok(())
   }
 }

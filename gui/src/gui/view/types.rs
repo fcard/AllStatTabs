@@ -74,37 +74,17 @@ pub struct SettingsInterface<'a> {
 
   pub settings_scrollable_state: Option<&'a mut scrollable::State>,
 
-  pub power_increase_state: Option<&'a mut text_input::State>,
-  pub power_increase_value: Option<&'a str>,
-  pub power_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub stamina_increase_state: Option<&'a mut text_input::State>,
-  pub stamina_increase_value: Option<&'a str>,
-  pub stamina_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub speed_increase_state: Option<&'a mut text_input::State>,
-  pub speed_increase_value: Option<&'a str>,
-  pub speed_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub magic_increase_state: Option<&'a mut text_input::State>,
-  pub magic_increase_value: Option<&'a str>,
-  pub magic_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub hit_increase_state: Option<&'a mut text_input::State>,
-  pub hit_increase_value: Option<&'a str>,
-  pub hit_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub evade_increase_state: Option<&'a mut text_input::State>,
-  pub evade_increase_value: Option<&'a str>,
-  pub evade_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub magic_defense_increase_state: Option<&'a mut text_input::State>,
-  pub magic_defense_increase_value: Option<&'a str>,
-  pub magic_defense_increase_slider_state: Option<&'a mut slider::State>,
-
-  pub gradual_exp_min_state: Option<&'a mut text_input::State>,
-  pub gradual_exp_min_value: Option<&'a str>,
-  pub gradual_exp_min_slider_state: Option<&'a mut slider::State>,
+  pub power_increase: Option<&'a mut PowerIncrease>,
+  pub stamina_increase: Option<&'a mut StaminaIncrease>,
+  pub speed_increase: Option<&'a mut SpeedIncrease>,
+  pub magic_increase: Option<&'a mut MagicIncrease>,
+  pub hit_increase: Option<&'a mut HitIncrease>,
+  pub evade_increase: Option<&'a mut EvadeIncrease>,
+  pub magic_defense_increase: Option<&'a mut MagicDefenseIncrease>,
+  pub gradual_exp_min: Option<&'a mut GradualExpMin>,
+  pub exp_increase: Option<&'a mut ExpIncrease>,
+  pub gold_increase: Option<&'a mut GoldIncrease>,
+  pub tech_increase: Option<&'a mut TechIncrease>,
 }
 
 impl<'a> SettingsInterface<'a> {
@@ -142,6 +122,13 @@ impl<'a, F: TextInputMsgFn, G: SliderMsgFn> ByteSettingRow<'a, F, G> {
       max: None,
       value: None,
     }
+  }
+
+  pub fn byte_setting<B: ByteSetting>(self, b: &'a mut B) -> Self {
+    let parts = b.parts();
+    self.input_value(parts.input_value)
+        .input_state(parts.input_state)
+        .slider_state(parts.slider_state)
   }
 }
 

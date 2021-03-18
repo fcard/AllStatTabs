@@ -47,6 +47,12 @@ fn help_scrollable(state: &mut scrollable::State) -> Scrollable<ASTMessage> {
     .push(help_option_text(help::GRADUAL_EXP))
     .push(help_option_name("Minimum Gradual Experience Level Group"))
     .push(help_option_text(help::GRADUAL_EXP_MIN))
+    .push(help_option_name("Experience Increase"))
+    .push(help_option_text(help::EXP_INCREASE))
+    .push(help_option_name("Gold Increase"))
+    .push(help_option_text(help::GOLD_INCREASE))
+    .push(help_option_name("Tech Increase"))
+    .push(help_option_text(help::TECH_INCREASE))
   )
 }
 

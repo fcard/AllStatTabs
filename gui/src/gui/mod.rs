@@ -1,5 +1,8 @@
 mod view;
 mod update;
+mod byte_settings;
+
+pub use byte_settings::*;
 
 use const_format::*;
 use pathsepstring::*;
@@ -10,6 +13,7 @@ pub use iced::{text_input, slider, button, scrollable};
 
 use crate::settings::*;
 
+#[derive(Default)]
 pub struct AllStatTabsSettings {
   pub settings : HackSettings,
   pub stat_min : i8,
@@ -32,30 +36,17 @@ pub struct AllStatTabsSettings {
   pub patch_value : String,
   pub patch_state : text_input::State,
   pub patch_button_state : button::State,
-  pub power_increase_value : String,
-  pub power_increase_state : text_input::State,
-  pub power_increase_slider_state : slider::State,
-  pub stamina_increase_value : String,
-  pub stamina_increase_state : text_input::State,
-  pub stamina_increase_slider_state : slider::State,
-  pub speed_increase_value : String,
-  pub speed_increase_state : text_input::State,
-  pub speed_increase_slider_state : slider::State,
-  pub magic_increase_value : String,
-  pub magic_increase_state : text_input::State,
-  pub magic_increase_slider_state : slider::State,
-  pub hit_increase_value : String,
-  pub hit_increase_state : text_input::State,
-  pub hit_increase_slider_state : slider::State,
-  pub evade_increase_value : String,
-  pub evade_increase_state : text_input::State,
-  pub evade_increase_slider_state : slider::State,
-  pub magic_defense_increase_value : String,
-  pub magic_defense_increase_state : text_input::State,
-  pub magic_defense_increase_slider_state : slider::State,
-  pub gradual_exp_min_value : String,
-  pub gradual_exp_min_state : text_input::State,
-  pub gradual_exp_min_slider_state : slider::State,
+  pub power_increase : PowerIncrease,
+  pub stamina_increase : StaminaIncrease,
+  pub speed_increase : SpeedIncrease,
+  pub magic_increase : MagicIncrease,
+  pub hit_increase : HitIncrease,
+  pub evade_increase : EvadeIncrease,
+  pub magic_defense_increase : MagicDefenseIncrease,
+  pub gradual_exp_min : GradualExpMin,
+  pub exp_increase : ExpIncrease,
+  pub gold_increase : GoldIncrease,
+  pub tech_increase : TechIncrease,
   pub save_button_state : button::State,
   pub quit_button_state : button::State,
   pub help_button_state : button::State,
@@ -97,6 +88,12 @@ pub enum ASTMessage {
   SetGradualExp(bool),
   SetGradualExpMin(String),
   SetGradualExpMinSlider(f64),
+  SetExpIncrease(String),
+  SetExpIncreaseSlider(f64),
+  SetGoldIncrease(String),
+  SetGoldIncreaseSlider(f64),
+  SetTechIncrease(String),
+  SetTechIncreaseSlider(f64),
   Save,
   Help,
   Quit,
@@ -115,64 +112,35 @@ impl Sandbox for AllStatTabsSettings {
   fn new() -> Self {
     let settings = HackSettings::new();
     let stat_min = if settings.tabs.allow_stat_decrease {-99} else {0};
-    let power_increase_value = settings.tabs.power_increase.to_string();
-    let stamina_increase_value = settings.tabs.stamina_increase.to_string();
-    let speed_increase_value = settings.tabs.speed_increase.to_string();
-    let magic_increase_value = settings.tabs.magic_increase.to_string();
-    let hit_increase_value = settings.tabs.hit_increase.to_string();
-    let evade_increase_value = settings.tabs.evade_increase.to_string();
-    let magic_defense_increase_value = settings.tabs.magic_defense_increase.to_string();
-    let gradual_exp_min_value = settings.expgoldtech.gradual_exp_min.to_string();
+    let power_increase = PowerIncrease::new(&settings);
+    let stamina_increase = StaminaIncrease::new(&settings);
+    let speed_increase = SpeedIncrease::new(&settings);
+    let magic_increase = MagicIncrease::new(&settings);
+    let hit_increase = HitIncrease::new(&settings);
+    let evade_increase = EvadeIncrease::new(&settings);
+    let magic_defense_increase = MagicDefenseIncrease::new(&settings);
+    let gradual_exp_min = GradualExpMin::new(&settings);
+    let exp_increase = ExpIncrease::new(&settings);
+    let gold_increase = GoldIncrease::new(&settings);
+    let tech_increase = TechIncrease::new(&settings);
     Self {
       settings,
       stat_min,
       help : false,
       patch_status: String::from("..."),
       patch_timer: 0,
-      patch_status_scrollable_state: scrollable::State::new(),
-      help_scrollable_state: scrollable::State::new(),
-      settings_scrollable_state: scrollable::State::new(),
-      original_rom_value: String::new(),
-      original_rom_state: text_input::State::new(),
-      original_rom_button_state : button::State::new(),
-      modified_rom_value: String::new(),
-      modified_rom_state: text_input::State::new(),
-      modified_rom_button_state: button::State::new(),
-      asar_value: String::new(),
-      asar_state: text_input::State::new(),
-      asar_button_state: button::State::new(),
-      patch_value: String::new(),
-      patch_state: text_input::State::new(),
-      patch_button_state: button::State::new(),
-      apply_patch_button_state: button::State::new(),
-      power_increase_value,
-      power_increase_state: text_input::State::new(),
-      power_increase_slider_state: slider::State::new(),
-      stamina_increase_value,
-      stamina_increase_state: text_input::State::new(),
-      stamina_increase_slider_state: slider::State::new(),
-      speed_increase_value,
-      speed_increase_state: text_input::State::new(),
-      speed_increase_slider_state: slider::State::new(),
-      magic_increase_value,
-      magic_increase_state: text_input::State::new(),
-      magic_increase_slider_state: slider::State::new(),
-      hit_increase_value,
-      hit_increase_state: text_input::State::new(),
-      hit_increase_slider_state: slider::State::new(),
-      evade_increase_value,
-      evade_increase_state: text_input::State::new(),
-      evade_increase_slider_state: slider::State::new(),
-      magic_defense_increase_value,
-      magic_defense_increase_state: text_input::State::new(),
-      magic_defense_increase_slider_state: slider::State::new(),
-      gradual_exp_min_value,
-      gradual_exp_min_state: text_input::State::new(),
-      gradual_exp_min_slider_state: slider::State::new(),
-      save_button_state: button::State::new(),
-      quit_button_state: button::State::new(),
-      help_button_state: button::State::new(),
-      default_button_state: button::State::new(),
+      power_increase,
+      stamina_increase,
+      speed_increase,
+      magic_increase,
+      hit_increase,
+      evade_increase,
+      magic_defense_increase,
+      gradual_exp_min,
+      exp_increase,
+      gold_increase,
+      tech_increase,
+      ..Self::default()
     }
   }
 

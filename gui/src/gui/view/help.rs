@@ -49,3 +49,15 @@ pub const GRADUAL_EXP_MIN: &str =
  have 4 times experience; if this setting is set to 2, then a player at levels \
  between 1 and 59 will have 8 times experience.";
 
+pub const EXP_INCREASE: &str =
+"The amount that experience is multiplied by when `Increase Exp/Gold/Tech` is enabled \
+ and `Gradual Experience Increase` is disabled. Can be set from 1 to 64.";
+
+pub const GOLD_INCREASE: &str =
+"The amount that money is multiplied by when `Increase Exp/Gold/Tech` is enabled. \
+ Can be set from 1 to 64.";
+
+pub const TECH_INCREASE: &str =
+"The amount that tech points are multiplied by when `Increase Exp/Gold/Tech` is enabled. \
+ Can be set from 1 to 64.";
+

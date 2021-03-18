@@ -5,28 +5,39 @@ use std::process::Command;
 use std::fs::copy;
 use std::path::Path;
 
-impl AllStatTabsSettings {
-  fn string_to_stat(&mut self, text: String, mut default: i8, max: i8) -> i8 {
-    if default < self.stat_min {
-      default = 0
-    }
-    if text.is_empty() || &text == "-" {
-      return 0;
-    }
 
-    if let Ok(num) = text.trim().parse::<i8>() {
-      if num > max {
-        default
-      } else if num < max*self.stat_min.signum() {
-        default
-      } else {
-        num
-      }
-    } else {
-      default
-    }
+fn string_setting<B: ByteSetting>(
+    bs: &mut B,
+    settings: &mut HackSettings,
+    text: String, min: i8, max: i8
+) {
+  let mut value = bs.get_setting(settings);
+  if value < min {
+    value = 0;
+  }
+  if text.is_empty() || &text == "-" {
+    value = 0;
   }
 
+  if let Ok(num) = text.trim().parse::<i8>() {
+    if num <= max && num >= min {
+      value = num;
+    }
+  }
+  bs.set_setting(settings, value);
+}
+
+fn float_setting<B: ByteSetting>(
+  bs: &mut B,
+  settings: &mut HackSettings,
+  float: f64
+) {
+  let value = float.trunc() as i8;
+  bs.set_setting(settings, value);
+}
+
+
+impl AllStatTabsSettings {
   fn apply_patch(&mut self) -> std::io::Result<()> {
     let original_rom_str = self.settings.patch.original_rom.clone();
     let modified_rom_str = self.settings.patch.modified_rom.clone();
@@ -78,25 +89,15 @@ impl AllStatTabsSettings {
   }
 
   pub fn react_to_message(&mut self, message: ASTMessage) {
-    macro_rules! stat_increase {
-      ($value: expr, $max: expr, $input_value: ident, $setting: ident) => {
-        let n = self.string_to_stat($value, self.settings.tabs.$setting, $max);
-        stat_increase_general!(n, $input_value, $setting);
+    macro_rules! string_setting {
+      ($value: expr, $stat: ident, $min: expr, $max: expr) => {
+        string_setting(&mut self.$stat, &mut self.settings, $value, $min, $max);
       }
     }
 
-    macro_rules! stat_increase_slider {
-      ($value: expr, $input_value: ident, $setting: ident) => {
-        let n = $value.trunc() as i8;
-        stat_increase_general!(n, $input_value, $setting);
-      }
-    }
-
-    macro_rules! stat_increase_general {
-      ($n: expr, $input_value: ident, $setting: ident) => {
-        self.$input_value.clear();
-        self.$input_value.push_str(&$n.to_string());
-        self.settings.tabs.$setting = $n;
+    macro_rules! float_setting {
+      ($value: expr, $stat: ident) => {
+        float_setting(&mut self.$stat, &mut self.settings, $value);
       }
     }
 
@@ -231,59 +232,59 @@ impl AllStatTabsSettings {
       },
 
       SetPowerIncrease(value) => {
-        stat_increase!(value, 99, power_increase_value, power_increase);
+        string_setting!(value, power_increase, self.stat_min, 99);
       },
 
       SetPowerIncreaseSlider(value) => {
-        stat_increase_slider!(value, power_increase_value, power_increase);
+        float_setting!(value, power_increase);
       },
 
       SetStaminaIncrease(value) => {
-        stat_increase!(value, 99, stamina_increase_value, stamina_increase);
+        string_setting!(value, stamina_increase, self.stat_min, 99);
       },
 
       SetStaminaIncreaseSlider(value) => {
-        stat_increase_slider!(value, stamina_increase_value, stamina_increase);
+        float_setting!(value, stamina_increase);
       },
 
       SetSpeedIncrease(value) => {
-        stat_increase!(value, 16, speed_increase_value, speed_increase);
+        string_setting!(value, speed_increase, 16*self.stat_min.signum(), 16);
       },
 
       SetSpeedIncreaseSlider(value) => {
-        stat_increase_slider!(value, speed_increase_value, speed_increase);
+        float_setting!(value, speed_increase);
       },
 
       SetMagicIncrease(value) => {
-        stat_increase!(value, 99, magic_increase_value, magic_increase);
+        string_setting!(value, magic_increase, self.stat_min, 99);
       },
 
       SetMagicIncreaseSlider(value) => {
-        stat_increase_slider!(value, magic_increase_value, magic_increase);
+        float_setting!(value, magic_increase);
       },
 
       SetHitIncrease(value) => {
-        stat_increase!(value, 99, hit_increase_value, hit_increase);
+        string_setting!(value, hit_increase, self.stat_min, 99);
       },
 
       SetHitIncreaseSlider(value) => {
-        stat_increase_slider!(value, hit_increase_value, hit_increase);
+        float_setting!(value, hit_increase);
       },
 
       SetEvadeIncrease(value) => {
-        stat_increase!(value, 99, evade_increase_value, evade_increase);
+        string_setting!(value, evade_increase, self.stat_min, 99);
       },
 
       SetEvadeIncreaseSlider(value) => {
-        stat_increase_slider!(value, evade_increase_value, evade_increase);
+        float_setting!(value, evade_increase);
       },
 
       SetMagicDefenseIncrease(value) => {
-        stat_increase!(value, 99, magic_defense_increase_value, magic_defense_increase);
+        string_setting!(value, magic_defense_increase, self.stat_min, 99);
       },
 
       SetMagicDefenseIncreaseSlider(value) => {
-        stat_increase_slider!(value, magic_defense_increase_value, magic_defense_increase);
+        float_setting!(value, magic_defense_increase);
       },
 
       SetExpGoldTechAllow(value) => {
@@ -294,24 +295,36 @@ impl AllStatTabsSettings {
         self.settings.expgoldtech.gradual_exp = value;
       },
 
-      SetGradualExpMin(mut value) => {
-        if value.is_empty() {
-          value = String::from("0");
-        }
-        if let Ok(n) = value.parse::<i8>() {
-          if n >= 0 && n <= 4 {
-            self.settings.expgoldtech.gradual_exp_min = n;
-            self.gradual_exp_min_value.clear();
-            self.gradual_exp_min_value.push_str(&n.to_string());
-          }
-        }
+      SetGradualExpMin(value) => {
+        string_setting!(value, gradual_exp_min, 0, 4);
       },
 
       SetGradualExpMinSlider(value) => {
-        let n = value.trunc() as i8;
-        self.settings.expgoldtech.gradual_exp_min = n;
-        self.gradual_exp_min_value.clear();
-        self.gradual_exp_min_value.push_str(&n.to_string());
+        float_setting!(value, gradual_exp_min);
+      }
+
+      SetExpIncrease(value) => {
+        string_setting!(value, exp_increase, 1, 64);
+      }
+
+      SetExpIncreaseSlider(value) => {
+        float_setting!(value, exp_increase);
+      }
+
+      SetGoldIncrease(value) => {
+        string_setting!(value, gold_increase, 1, 64);
+      }
+
+      SetGoldIncreaseSlider(value) => {
+        float_setting!(value, gold_increase);
+      }
+
+      SetTechIncrease(value) => {
+        string_setting!(value, tech_increase, 1, 64);
+      }
+
+      SetTechIncreaseSlider(value) => {
+        float_setting!(value, tech_increase);
       }
 
       Save => {
@@ -330,31 +343,17 @@ impl AllStatTabsSettings {
         self.settings.always_save = always_save;
         self.stat_min = 0;
 
-        let power           = self.settings.tabs.power_increase.to_string();
-        let stamina         = self.settings.tabs.stamina_increase.to_string();
-        let speed           = self.settings.tabs.speed_increase.to_string();
-        let magic           = self.settings.tabs.magic_increase.to_string();
-        let hit             = self.settings.tabs.hit_increase.to_string();
-        let evade           = self.settings.tabs.evade_increase.to_string();
-        let magic_defense   = self.settings.tabs.magic_defense_increase.to_string();
-        let gradual_exp_min = self.settings.expgoldtech.gradual_exp_min.to_string();
-
-        self.power_increase_value.clear();
-        self.power_increase_value.push_str(&power);
-        self.stamina_increase_value.clear();
-        self.stamina_increase_value.push_str(&stamina);
-        self.speed_increase_value.clear();
-        self.speed_increase_value.push_str(&speed);
-        self.magic_increase_value.clear();
-        self.magic_increase_value.push_str(&magic);
-        self.hit_increase_value.clear();
-        self.hit_increase_value.push_str(&hit);
-        self.evade_increase_value.clear();
-        self.evade_increase_value.push_str(&evade);
-        self.magic_defense_increase_value.clear();
-        self.magic_defense_increase_value.push_str(&magic_defense);
-        self.gradual_exp_min_value.clear();
-        self.gradual_exp_min_value.push_str(&gradual_exp_min);
+        self.power_increase.update_input_value(&self.settings);
+        self.stamina_increase.update_input_value(&self.settings);
+        self.speed_increase.update_input_value(&self.settings);
+        self.magic_increase.update_input_value(&self.settings);
+        self.hit_increase.update_input_value(&self.settings);
+        self.evade_increase.update_input_value(&self.settings);
+        self.magic_defense_increase.update_input_value(&self.settings);
+        self.gradual_exp_min.update_input_value(&self.settings);
+        self.exp_increase.update_input_value(&self.settings);
+        self.gold_increase.update_input_value(&self.settings);
+        self.tech_increase.update_input_value(&self.settings);
       }
 
       Quit => {
