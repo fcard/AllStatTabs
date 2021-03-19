@@ -1,6 +1,6 @@
 [package]
 name = "AllStatTabsSettings"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["phi <ficarde@gmail.com>"]
 edition = "2018"
 
