@@ -37,32 +37,45 @@ TabCondition:
 JML TabCondition.Allow
 
 
-macro IncreaseStat(statOffset, max, by)
+macro _IncreaseStat(statOffset, max, by, reg)
     if <by> != 0
         if <by> < 0
             !by = -<by>
-            LDA <statOffset>, X : SEC : SBC.b #!by
+            LDA <statOffset>, <reg> : SEC : SBC.b #!by
                 BEQ ?loadMin
                 BCC ?loadMin
                 BRA ?setStat
             ?loadMin:
                 LDA #$01
         else
-            LDA <statOffset>, X : CLC : ADC.b #<by> : CMP #<max> : BCC ?setStat
+            LDA <statOffset>, <reg> : CLC : ADC.b #<by> : CMP #<max> : BCC ?setStat
                 LDA #<max>
         endif
         ?setStat:
-            STA <statOffset>, X
+            STA <statOffset>, <reg>
     endif
+endmacro
+
+macro IncreaseStat(statOffset, max, by)
+    %_IncreaseStat(<statOffset>, <max>, <by>, X)
+    %_IncreaseStat(<statOffset>-$B+$2F, <max>, <by>, Y)
 endmacro
 
 TabIncrease:
     SEP #$20
+    PHY
     LDX $6F
+    LDY $00
     CMP #$00 : BEQ .powerTab
-    CMP #$02 : BEQ .speedTab
-    CMP #$03 : BEQ .magicTab
+    CMP #$02 : BEQ .speedTabShort
+    CMP #$03 : BEQ .magicTabShort
     JML TabIncrease.Return
+
+    .speedTabShort
+    BRL .speedTab
+
+    .magicTabShort
+    BRL .magicTab
 
     .powerTab
     %IncreaseStat($000B, $63, !PowerIncrease)
@@ -70,6 +83,7 @@ TabIncrease:
     if !PowerTabIncreasesHit != 0
         %IncreaseStat($000F, $63, !HitIncrease)
     endif
+    PLY
     JML TabIncrease.Return
 
     .speedTab
@@ -78,10 +92,11 @@ TabIncrease:
     if !PowerTabIncreasesHit == 0
         %IncreaseStat($000F, $63, !HitIncrease)
     endif
+    PLY
     JML TabIncrease.Return
 
     .magicTab
     %IncreaseStat($000E, $63, !MagicIncrease)
     %IncreaseStat($0011, $63, !MagicDefenseIncrease)
+    PLY
 JML TabIncrease.Return
-
